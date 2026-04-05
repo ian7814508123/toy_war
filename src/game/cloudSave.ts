@@ -18,6 +18,7 @@ export interface CloudStatusSnapshot {
   enabled: boolean;
   user: User | null;
   session: Session | null;
+  errorMessage?: string;
 }
 
 export interface CloudSyncResult {
@@ -65,16 +66,30 @@ export const getCloudStatusSnapshot = async (): Promise<CloudStatusSnapshot> => 
     return { enabled: false, user: null, session: null };
   }
 
-  const [{ data: sessionData }, { data: userData }] = await Promise.all([
-    supabase.auth.getSession(),
-    supabase.auth.getUser()
-  ]);
+  try {
+    const { data: sessionData, error } = await supabase.auth.getSession();
+    if (error) {
+      return {
+        enabled: true,
+        session: null,
+        user: null,
+        errorMessage: error.message
+      };
+    }
 
-  return {
-    enabled: true,
-    session: sessionData.session,
-    user: userData.user ?? null
-  };
+    return {
+      enabled: true,
+      session: sessionData.session,
+      user: sessionData.session?.user ?? null
+    };
+  } catch (error) {
+    return {
+      enabled: true,
+      session: null,
+      user: null,
+      errorMessage: error instanceof Error ? error.message : "讀取登入狀態失敗。"
+    };
+  }
 };
 
 export const subscribeCloudAuth = (
@@ -86,11 +101,10 @@ export const subscribeCloudAuth = (
   }
 
   const { data } = supabase.auth.onAuthStateChange(async (_event, session) => {
-    const user = session?.user ?? (await supabase.auth.getUser()).data.user ?? null;
     await callback({
       enabled: true,
       session,
-      user
+      user: session?.user ?? null
     });
   });
 
@@ -307,4 +321,3 @@ export const reconcileLocalAndCloudSave = async (): Promise<CloudSyncResult> => 
     };
   }
 };
-

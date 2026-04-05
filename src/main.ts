@@ -44,11 +44,11 @@ app.innerHTML = `
         <section class="cloud-panel">
           <div class="cloud-panel__title">雲端存檔</div>
           <div id="cloud-auth-summary" class="cloud-panel__summary">檢查雲端設定中...</div>
-          <div class="cloud-panel__row">
+          <div id="cloud-signin-row" class="cloud-panel__row">
             <input id="cloud-email-input" class="cloud-input" type="email" placeholder="輸入 Email 取得 magic link" />
             <button id="cloud-signin-btn" class="ghost-button">登入</button>
           </div>
-          <div class="cloud-panel__row">
+          <div id="cloud-actions-row" class="cloud-panel__row">
             <button id="cloud-sync-btn" class="ghost-button">同步雲端</button>
             <button id="cloud-download-btn" class="ghost-button">下載雲端</button>
             <button id="cloud-signout-btn" class="ghost-button">登出</button>
@@ -138,8 +138,11 @@ const cloudSignInButton = document.getElementById("cloud-signin-btn") as HTMLBut
 const cloudSyncButton = document.getElementById("cloud-sync-btn") as HTMLButtonElement | null;
 const cloudDownloadButton = document.getElementById("cloud-download-btn") as HTMLButtonElement | null;
 const cloudSignOutButton = document.getElementById("cloud-signout-btn") as HTMLButtonElement | null;
+const cloudSignInRow = document.getElementById("cloud-signin-row");
+const cloudActionsRow = document.getElementById("cloud-actions-row");
 let signInCooldownSeconds = 0;
 let signInCooldownTimer: number | null = null;
+let cloudActionInFlight = false;
 
 const setCloudStatusLines = (lines: string[]): void => {
   if (!cloudStatus) {
@@ -160,6 +163,20 @@ const setCloudButtonsDisabled = (disabled: boolean): void => {
   });
 };
 
+const setCloudRowsForLoginState = (loggedIn: boolean): void => {
+  cloudSignInRow?.classList.toggle("is-hidden", loggedIn);
+  cloudActionsRow?.classList.toggle("is-hidden", !loggedIn);
+};
+
+const clearSupabaseHash = (): void => {
+  if (!window.location.hash) {
+    return;
+  }
+
+  const url = `${window.location.origin}${window.location.pathname}${window.location.search}`;
+  window.history.replaceState({}, document.title, url);
+};
+
 const updateSignInButtonState = (): void => {
   if (!cloudSignInButton) {
     return;
@@ -172,6 +189,22 @@ const updateSignInButtonState = (): void => {
   const shouldDisable = !config.enabled || signInCooldownSeconds > 0;
   cloudSignInButton.disabled = shouldDisable;
   cloudSignInButton.classList.toggle("is-disabled", shouldDisable);
+};
+
+const setCloudActionInFlight = (inFlight: boolean): void => {
+  cloudActionInFlight = inFlight;
+
+  [cloudSyncButton, cloudDownloadButton, cloudSignOutButton].forEach((button) => {
+    if (!button) {
+      return;
+    }
+
+    const shouldDisable = inFlight || button.disabled;
+    button.classList.toggle("is-disabled", shouldDisable);
+    if (inFlight) {
+      button.disabled = true;
+    }
+  });
 };
 
 const startSignInCooldown = (seconds: number): void => {
@@ -219,65 +252,94 @@ const readSupabaseHashError = (): string | null => {
 };
 
 const updateCloudSummary = async (): Promise<void> => {
-  const config = getCloudConfigState();
-  if (!config.enabled) {
-    if (cloudSummary) {
-      cloudSummary.textContent = "未啟用";
-    }
-    setCloudButtonsDisabled(true);
-    updateSignInButtonState();
-    if (cloudEmailInput) {
-      cloudEmailInput.disabled = true;
-    }
-    setCloudStatusLines([
-      config.reason ?? "尚未設定 Supabase。",
-      "請先填寫 .env.local 的 VITE_SUPABASE_URL 與 VITE_SUPABASE_ANON_KEY。"
-    ]);
-    return;
-  }
-
-  const snapshot = await getCloudStatusSnapshot();
-  const loggedIn = Boolean(snapshot.user);
-
-  if (cloudSummary) {
-    cloudSummary.textContent = loggedIn
-      ? `已登入：${snapshot.user?.email ?? "未知帳號"}`
-      : "尚未登入";
-  }
-
-  if (cloudEmailInput) {
-    cloudEmailInput.disabled = loggedIn;
-  }
-
-  updateSignInButtonState();
-  if (cloudSignInButton) {
-    cloudSignInButton.disabled = loggedIn || signInCooldownSeconds > 0;
-    cloudSignInButton.classList.toggle("is-disabled", cloudSignInButton.disabled);
-  }
-
-  [cloudSyncButton, cloudDownloadButton, cloudSignOutButton].forEach((button) => {
-    if (!button) {
+  try {
+    const config = getCloudConfigState();
+    if (!config.enabled) {
+      if (cloudSummary) {
+        cloudSummary.textContent = "未啟用";
+      }
+      setCloudButtonsDisabled(true);
+      setCloudRowsForLoginState(false);
+      updateSignInButtonState();
+      if (cloudEmailInput) {
+        cloudEmailInput.disabled = true;
+      }
+      setCloudStatusLines([
+        config.reason ?? "尚未設定 Supabase。",
+        "請先填寫 .env.local 的 VITE_SUPABASE_URL 與 VITE_SUPABASE_ANON_KEY。"
+      ]);
       return;
     }
 
-    button.disabled = !loggedIn;
-    button.classList.toggle("is-disabled", !loggedIn);
-  });
+    const snapshot = await getCloudStatusSnapshot();
+    const loggedIn = Boolean(snapshot.user);
 
-  setCloudStatusLines(
-    loggedIn
-      ? [
-        "登入後可把本機存檔同步到 Supabase。",
-        "按「下載雲端」會把雲端進度寫回本機，然後重新整理畫面。"
-      ]
-      : [
-        "請輸入 Email，系統會寄出 link。",
-      ]
-  );
+    if (cloudSummary) {
+      cloudSummary.textContent = snapshot.errorMessage
+        ? "登入狀態讀取失敗"
+        : loggedIn
+          ? `已登入：${snapshot.user?.email ?? "未知帳號"}`
+          : "尚未登入";
+    }
 
-  const hashError = readSupabaseHashError();
-  if (hashError) {
-    setCloudStatusLines([hashError]);
+    setCloudRowsForLoginState(loggedIn);
+
+    if (cloudEmailInput) {
+      cloudEmailInput.disabled = loggedIn;
+    }
+
+    updateSignInButtonState();
+    if (cloudSignInButton) {
+      cloudSignInButton.disabled = loggedIn || signInCooldownSeconds > 0;
+      cloudSignInButton.classList.toggle("is-disabled", cloudSignInButton.disabled);
+    }
+
+    [cloudSyncButton, cloudDownloadButton, cloudSignOutButton].forEach((button) => {
+      if (!button) {
+        return;
+      }
+
+      button.disabled = cloudActionInFlight || !loggedIn;
+      button.classList.toggle("is-disabled", button.disabled);
+    });
+
+    if (snapshot.errorMessage) {
+      setCloudStatusLines([
+        "讀取 Supabase 登入狀態時發生問題。",
+        snapshot.errorMessage
+      ]);
+      return;
+    }
+
+    const hashError = readSupabaseHashError();
+    if (hashError) {
+      setCloudStatusLines([hashError]);
+      clearSupabaseHash();
+      return;
+    }
+
+    if (loggedIn) {
+      clearSupabaseHash();
+      setCloudStatusLines([
+        "你已登入雲端存檔。",
+        "可以同步本機進度，或下載雲端進度覆蓋本機。"
+      ]);
+      return;
+    }
+
+    setCloudStatusLines([
+      "請輸入 Email，系統會寄出 magic link。",
+      "登入成功後，這裡會切成同步 / 下載 / 登出操作。"
+    ]);
+  } catch (error) {
+    if (cloudSummary) {
+      cloudSummary.textContent = "雲端狀態初始化失敗";
+    }
+    setCloudRowsForLoginState(false);
+    setCloudStatusLines([
+      "初始化雲端登入區時發生錯誤。",
+      error instanceof Error ? error.message : "未知錯誤"
+    ]);
   }
 };
 
@@ -312,19 +374,40 @@ const bindCloudControls = (): void => {
   });
 
   cloudSyncButton?.addEventListener("click", async () => {
-    const result = await reconcileLocalAndCloudSave();
-    handleCloudResult(result.message, result.reloadedFromCloud);
+    try {
+      setCloudActionInFlight(true);
+      setCloudStatusLines(["正在同步本機與雲端存檔..."]);
+      const result = await reconcileLocalAndCloudSave();
+      handleCloudResult(result.message, result.reloadedFromCloud);
+    } finally {
+      setCloudActionInFlight(false);
+      await updateCloudSummary();
+    }
   });
 
   cloudDownloadButton?.addEventListener("click", async () => {
-    const result = await loadCloudSaveToLocal();
-    handleCloudResult(result.message, result.reloadedFromCloud);
+    try {
+      setCloudActionInFlight(true);
+      setCloudStatusLines(["正在下載雲端存檔到本機..."]);
+      const result = await loadCloudSaveToLocal();
+      handleCloudResult(result.message, result.reloadedFromCloud);
+    } finally {
+      setCloudActionInFlight(false);
+      await updateCloudSummary();
+    }
   });
 
   cloudSignOutButton?.addEventListener("click", async () => {
-    const result = await signOutCloud();
-    setCloudStatusLines([result.message]);
-    await updateCloudSummary();
+    try {
+      setCloudActionInFlight(true);
+      setCloudStatusLines(["正在登出雲端存檔..."]);
+      const result = await signOutCloud();
+      clearSupabaseHash();
+      setCloudStatusLines([result.message]);
+    } finally {
+      setCloudActionInFlight(false);
+      await updateCloudSummary();
+    }
   });
 };
 

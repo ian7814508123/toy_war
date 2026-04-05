@@ -124,6 +124,10 @@ button {
   line-height: 1.4;
 }
 
+.is-hidden {
+  display: none !important;
+}
+
 .board-main {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 280px;
