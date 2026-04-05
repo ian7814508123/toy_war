@@ -138,6 +138,8 @@ const cloudSignInButton = document.getElementById("cloud-signin-btn") as HTMLBut
 const cloudSyncButton = document.getElementById("cloud-sync-btn") as HTMLButtonElement | null;
 const cloudDownloadButton = document.getElementById("cloud-download-btn") as HTMLButtonElement | null;
 const cloudSignOutButton = document.getElementById("cloud-signout-btn") as HTMLButtonElement | null;
+let signInCooldownSeconds = 0;
+let signInCooldownTimer: number | null = null;
 
 const setCloudStatusLines = (lines: string[]): void => {
   if (!cloudStatus) {
@@ -158,6 +160,64 @@ const setCloudButtonsDisabled = (disabled: boolean): void => {
   });
 };
 
+const updateSignInButtonState = (): void => {
+  if (!cloudSignInButton) {
+    return;
+  }
+
+  const config = getCloudConfigState();
+  const baseLabel = signInCooldownSeconds > 0 ? `請稍候 ${signInCooldownSeconds}s` : "登入";
+  cloudSignInButton.textContent = baseLabel;
+
+  const shouldDisable = !config.enabled || signInCooldownSeconds > 0;
+  cloudSignInButton.disabled = shouldDisable;
+  cloudSignInButton.classList.toggle("is-disabled", shouldDisable);
+};
+
+const startSignInCooldown = (seconds: number): void => {
+  signInCooldownSeconds = seconds;
+  updateSignInButtonState();
+
+  if (signInCooldownTimer !== null) {
+    window.clearInterval(signInCooldownTimer);
+  }
+
+  signInCooldownTimer = window.setInterval(() => {
+    signInCooldownSeconds = Math.max(0, signInCooldownSeconds - 1);
+    updateSignInButtonState();
+
+    if (signInCooldownSeconds === 0 && signInCooldownTimer !== null) {
+      window.clearInterval(signInCooldownTimer);
+      signInCooldownTimer = null;
+    }
+  }, 1000);
+};
+
+const readSupabaseHashError = (): string | null => {
+  const hash = window.location.hash.startsWith("#") ? window.location.hash.slice(1) : "";
+  if (!hash) {
+    return null;
+  }
+
+  const params = new URLSearchParams(hash);
+  const errorCode = params.get("error_code");
+  const description = params.get("error_description");
+
+  if (!errorCode && !description) {
+    return null;
+  }
+
+  if (errorCode === "otp_expired") {
+    return "Magic link 已失效或已被使用，請重新寄送一封新的登入信，並只點最新那一封。";
+  }
+
+  if (description) {
+    return decodeURIComponent(description.replace(/\+/g, " "));
+  }
+
+  return errorCode;
+};
+
 const updateCloudSummary = async (): Promise<void> => {
   const config = getCloudConfigState();
   if (!config.enabled) {
@@ -165,6 +225,7 @@ const updateCloudSummary = async (): Promise<void> => {
       cloudSummary.textContent = "未啟用";
     }
     setCloudButtonsDisabled(true);
+    updateSignInButtonState();
     if (cloudEmailInput) {
       cloudEmailInput.disabled = true;
     }
@@ -185,12 +246,13 @@ const updateCloudSummary = async (): Promise<void> => {
   }
 
   if (cloudEmailInput) {
-    cloudEmailInput.disabled = false;
+    cloudEmailInput.disabled = loggedIn;
   }
 
+  updateSignInButtonState();
   if (cloudSignInButton) {
-    cloudSignInButton.disabled = false;
-    cloudSignInButton.classList.remove("is-disabled");
+    cloudSignInButton.disabled = loggedIn || signInCooldownSeconds > 0;
+    cloudSignInButton.classList.toggle("is-disabled", cloudSignInButton.disabled);
   }
 
   [cloudSyncButton, cloudDownloadButton, cloudSignOutButton].forEach((button) => {
@@ -205,14 +267,18 @@ const updateCloudSummary = async (): Promise<void> => {
   setCloudStatusLines(
     loggedIn
       ? [
-          "登入後可把本機存檔同步到 Supabase。",
-          "按「下載雲端」會把雲端進度寫回本機，然後重新整理畫面。"
-        ]
+        "登入後可把本機存檔同步到 Supabase。",
+        "按「下載雲端」會把雲端進度寫回本機，然後重新整理畫面。"
+      ]
       : [
-          "請輸入 Email，系統會寄出 magic link。",
-          "首次測試前，記得在 Supabase Auth 設定站台網址與 redirect URL。"
-        ]
+        "請輸入 Email，系統會寄出 link。",
+      ]
   );
+
+  const hashError = readSupabaseHashError();
+  if (hashError) {
+    setCloudStatusLines([hashError]);
+  }
 };
 
 const handleCloudResult = (message: string, reload = false): void => {
@@ -230,8 +296,19 @@ const bindCloudControls = (): void => {
       return;
     }
 
+    startSignInCooldown(45);
     const result = await sendMagicLink(email);
-    setCloudStatusLines([result.message]);
+    if (!result.ok && result.message.toLowerCase().includes("rate limit")) {
+      startSignInCooldown(90);
+      setCloudStatusLines(["寄送過於頻繁，請稍候再試。", result.message]);
+      return;
+    }
+
+    setCloudStatusLines(
+      result.ok
+        ? [result.message, "請只點最新那封信中的連結一次。"]
+        : [result.message]
+    );
   });
 
   cloudSyncButton?.addEventListener("click", async () => {
