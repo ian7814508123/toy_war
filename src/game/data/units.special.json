@@ -1,0 +1,321 @@
+[
+  {
+    "id": "heavy-gunner",
+    "name": "重火力",
+    "tier": "special",
+    "role": "反防禦重裝",
+    "description": "以高防禦著稱，優先攻擊防禦塔與碉堡。",
+    "targetPriority": "defense_first",
+    "moveType": "ground",
+    "attackType": "ranged",
+    "canAttackGround": true,
+    "canAttackAir": false,
+    "lootBonus": null,
+    "statProfile": {
+      "durability": "high",
+      "damage": "medium",
+      "speed": "low",
+      "range": "medium"
+    },
+    "prototypeStats": {
+      "hp": 280,
+      "attack": 36,
+      "attackIntervalMs": 1200,
+      "moveSpeed": 68,
+      "range": 110
+    },
+    "trainingCost": { "plastic": 260, "oil": 80 },
+    "trainingTimeSeconds": 28,
+    "notes": []
+  },
+  {
+    "id": "iron-hero",
+    "name": "鋼鐵俠",
+    "tier": "special",
+    "role": "全能輸出",
+    "description": "人體與機器結合而成，攻擊所有建築。",
+    "targetPriority": "all_buildings",
+    "moveType": "ground",
+    "attackType": "ranged",
+    "canAttackGround": true,
+    "canAttackAir": true,
+    "lootBonus": null,
+    "statProfile": {
+      "durability": "medium",
+      "damage": "high",
+      "speed": "medium",
+      "range": "long"
+    },
+    "prototypeStats": {
+      "hp": 220,
+      "attack": 44,
+      "attackIntervalMs": 950,
+      "moveSpeed": 92,
+      "range": 150
+    },
+    "trainingCost": { "plastic": 280, "oil": 120, "crystal": 80 },
+    "trainingTimeSeconds": 32,
+    "notes": ["可以對空。"]
+  },
+  {
+    "id": "green-giant",
+    "name": "綠巨人",
+    "tier": "special",
+    "role": "重裝主力",
+    "description": "高血高傷，攻擊所有建築。",
+    "targetPriority": "all_buildings",
+    "moveType": "ground",
+    "attackType": "melee",
+    "canAttackGround": true,
+    "canAttackAir": false,
+    "lootBonus": null,
+    "statProfile": {
+      "durability": "very_high",
+      "damage": "high",
+      "speed": "medium",
+      "range": "melee"
+    },
+    "prototypeStats": {
+      "hp": 420,
+      "attack": 56,
+      "attackIntervalMs": 1300,
+      "moveSpeed": 84,
+      "range": 24
+    },
+    "trainingCost": { "plastic": 320, "oil": 160 },
+    "trainingTimeSeconds": 38,
+    "notes": []
+  },
+  {
+    "id": "devil",
+    "name": "惡魔",
+    "tier": "special",
+    "role": "高速拆防",
+    "description": "優先攻擊防禦塔與碉堡的高機動特種兵。",
+    "targetPriority": "defense_first",
+    "moveType": "ground",
+    "attackType": "melee",
+    "canAttackGround": true,
+    "canAttackAir": false,
+    "lootBonus": null,
+    "statProfile": {
+      "durability": "medium",
+      "damage": "high",
+      "speed": "high",
+      "range": "melee"
+    },
+    "prototypeStats": {
+      "hp": 200,
+      "attack": 50,
+      "attackIntervalMs": 900,
+      "moveSpeed": 116,
+      "range": 20
+    },
+    "trainingCost": { "plastic": 280, "oil": 140 },
+    "trainingTimeSeconds": 30,
+    "notes": []
+  },
+  {
+    "id": "hunter",
+    "name": "獵人",
+    "tier": "special",
+    "role": "精準拆防",
+    "description": "專門針對防禦塔與碉堡的精準輸出兵。",
+    "targetPriority": "defense_first",
+    "moveType": "ground",
+    "attackType": "ranged",
+    "canAttackGround": true,
+    "canAttackAir": false,
+    "lootBonus": null,
+    "statProfile": {
+      "durability": "low",
+      "damage": "high",
+      "speed": "high",
+      "range": "long"
+    },
+    "prototypeStats": {
+      "hp": 160,
+      "attack": 62,
+      "attackIntervalMs": 1200,
+      "moveSpeed": 108,
+      "range": 170
+    },
+    "trainingCost": { "plastic": 260, "oil": 140, "crystal": 100 },
+    "trainingTimeSeconds": 30,
+    "notes": ["第一版可做高爆擊率兵種。"]
+  },
+  {
+    "id": "light-dancer",
+    "name": "輕舞飛揚",
+    "tier": "special",
+    "role": "治療支援",
+    "description": "治療傾向為己方英雄與士兵。",
+    "targetPriority": "support_heal",
+    "moveType": "ground",
+    "attackType": "heal",
+    "canAttackGround": false,
+    "canAttackAir": false,
+    "lootBonus": null,
+    "statProfile": {
+      "durability": "low",
+      "damage": "low",
+      "speed": "medium",
+      "range": "medium"
+    },
+    "prototypeStats": {
+      "hp": 140,
+      "attack": 26,
+      "attackIntervalMs": 1300,
+      "moveSpeed": 86,
+      "range": 120
+    },
+    "trainingCost": { "plastic": 200, "oil": 110, "crystal": 120 },
+    "trainingTimeSeconds": 26,
+    "notes": ["attack 欄位可解讀為治療量。"]
+  },
+  {
+    "id": "air-force-one",
+    "name": "空軍一號",
+    "tier": "special",
+    "role": "飛行輸出",
+    "description": "高空領域王者，移動快且輸出高。",
+    "targetPriority": "all_buildings",
+    "moveType": "air",
+    "attackType": "ranged",
+    "canAttackGround": true,
+    "canAttackAir": false,
+    "lootBonus": null,
+    "statProfile": {
+      "durability": "medium",
+      "damage": "high",
+      "speed": "very_high",
+      "range": "medium"
+    },
+    "prototypeStats": {
+      "hp": 190,
+      "attack": 48,
+      "attackIntervalMs": 1000,
+      "moveSpeed": 144,
+      "range": 140
+    },
+    "trainingCost": { "plastic": 300, "oil": 200, "crystal": 120 },
+    "trainingTimeSeconds": 34,
+    "notes": ["會被防空塔針對。"]
+  },
+  {
+    "id": "destroyer",
+    "name": "毀滅者",
+    "tier": "special",
+    "role": "破牆轟炸",
+    "description": "極短時間內釋放巨大能量，優先攻擊城牆。",
+    "targetPriority": "wall_first",
+    "moveType": "ground",
+    "attackType": "siege",
+    "canAttackGround": true,
+    "canAttackAir": false,
+    "lootBonus": null,
+    "statProfile": {
+      "durability": "low",
+      "damage": "very_high",
+      "speed": "medium",
+      "range": "short"
+    },
+    "prototypeStats": {
+      "hp": 110,
+      "attack": 230,
+      "attackIntervalMs": 1800,
+      "moveSpeed": 94,
+      "range": 64
+    },
+    "trainingCost": { "plastic": 340, "oil": 220 },
+    "trainingTimeSeconds": 36,
+    "notes": []
+  },
+  {
+    "id": "gold-scarab",
+    "name": "金甲蟲",
+    "tier": "special",
+    "role": "全能重裝",
+    "description": "可對抗地面與空中的全能型戰士。",
+    "targetPriority": "all_buildings",
+    "moveType": "ground",
+    "attackType": "ranged",
+    "canAttackGround": true,
+    "canAttackAir": true,
+    "lootBonus": null,
+    "statProfile": {
+      "durability": "high",
+      "damage": "high",
+      "speed": "medium",
+      "range": "long"
+    },
+    "prototypeStats": {
+      "hp": 300,
+      "attack": 52,
+      "attackIntervalMs": 1100,
+      "moveSpeed": 88,
+      "range": 160
+    },
+    "trainingCost": { "plastic": 380, "oil": 220, "crystal": 120 },
+    "trainingTimeSeconds": 38,
+    "notes": ["可對空。"]
+  },
+  {
+    "id": "little-devil",
+    "name": "小惡魔",
+    "tier": "special",
+    "role": "群體飛兵",
+    "description": "體型小、成群行動、快速消滅目標的飛行兵。",
+    "targetPriority": "all_buildings",
+    "moveType": "air",
+    "attackType": "melee",
+    "canAttackGround": true,
+    "canAttackAir": false,
+    "lootBonus": null,
+    "statProfile": {
+      "durability": "low",
+      "damage": "medium",
+      "speed": "very_high",
+      "range": "melee"
+    },
+    "prototypeStats": {
+      "hp": 90,
+      "attack": 24,
+      "attackIntervalMs": 700,
+      "moveSpeed": 156,
+      "range": 18
+    },
+    "trainingCost": { "plastic": 240, "oil": 160 },
+    "trainingTimeSeconds": 22,
+    "notes": ["適合成群派遣。"]
+  },
+  {
+    "id": "rock-beast",
+    "name": "岩石獸",
+    "tier": "special",
+    "role": "狂暴重裝",
+    "description": "受傷後會燃起怒火的高端重裝單位。",
+    "targetPriority": "all_buildings",
+    "moveType": "ground",
+    "attackType": "melee",
+    "canAttackGround": true,
+    "canAttackAir": false,
+    "lootBonus": null,
+    "statProfile": {
+      "durability": "very_high",
+      "damage": "high",
+      "speed": "medium",
+      "range": "melee"
+    },
+    "prototypeStats": {
+      "hp": 500,
+      "attack": 54,
+      "attackIntervalMs": 1200,
+      "moveSpeed": 82,
+      "range": 24
+    },
+    "trainingCost": { "plastic": 420, "oil": 260, "crystal": 120 },
+    "trainingTimeSeconds": 42,
+    "notes": ["第二階段可補血量低於 50% 進入狂暴。"]
+  }
+]

@@ -1,0 +1,50 @@
+[
+  {
+    "id": "kong-frontline",
+    "name": "前線硬甲",
+    "ownerId": "king-kong",
+    "ownerType": "hero",
+    "trigger": "passive",
+    "effectSummary": "降低自身受到的最終傷害。"
+  },
+  {
+    "id": "black-knight-first-strike",
+    "name": "毀滅首擊",
+    "ownerId": "black-knight",
+    "ownerType": "hero",
+    "trigger": "on_attack",
+    "effectSummary": "戰鬥開始後首次攻擊造成額外爆發傷害。"
+  },
+  {
+    "id": "peter-pan-aura",
+    "name": "飛翔光環",
+    "ownerId": "peter-pan",
+    "ownerType": "hero",
+    "trigger": "battle_start",
+    "effectSummary": "提升周圍友軍的移動速度與防禦。"
+  },
+  {
+    "id": "iron-hide-breacher",
+    "name": "鋼鐵破陣",
+    "ownerId": "iron-hide",
+    "ownerType": "hero",
+    "trigger": "passive",
+    "effectSummary": "對防禦建築增傷，並減免地雷傷害。"
+  },
+  {
+    "id": "skywalker-triple-wave",
+    "name": "三連光波",
+    "ownerId": "skywalker",
+    "ownerType": "hero",
+    "trigger": "on_attack",
+    "effectSummary": "單次攻擊會連續命中最多三段。"
+  },
+  {
+    "id": "scanner-reveal",
+    "name": "雷區探知",
+    "ownerId": "scanner",
+    "ownerType": "hero",
+    "trigger": "battle_start",
+    "effectSummary": "揭露陷阱位置並提升索敵資訊。"
+  }
+]

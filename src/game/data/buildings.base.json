@@ -1,0 +1,261 @@
+[
+  {
+    "id": "command-center",
+    "name": "主控台",
+    "category": "command",
+    "description": "基地核心建築，決定多數建築的升級上限與解鎖條件。",
+    "size": { "width": 4, "height": 4 },
+    "unlock": { "commandCenterLevel": 1 },
+    "buildCost": {},
+    "buildTimeSeconds": null,
+    "maxLevel": 20,
+    "notes": ["後續多數建築依此建築等級解鎖。"]
+  },
+  {
+    "id": "plastic-factory",
+    "name": "塑膠工廠",
+    "category": "resource",
+    "description": "定時生產塑膠，需要手動收取。",
+    "size": { "width": 3, "height": 3 },
+    "unlock": { "commandCenterLevel": 1 },
+    "buildCost": { "block": 600, "screw": 300 },
+    "buildTimeSeconds": 30,
+    "maxLevel": 10,
+    "production": {
+      "resourceId": "plastic",
+      "collectionMode": "manual",
+      "ratePerHour": 1200,
+      "storageCap": 1200
+    },
+    "notes": ["被摧毀後停工。", "未收取資源會按比例損失。"]
+  },
+  {
+    "id": "crystal-factory",
+    "name": "水晶工廠",
+    "category": "resource",
+    "description": "定時生產水晶，需要手動收取。",
+    "size": { "width": 3, "height": 3 },
+    "unlock": { "commandCenterLevel": 1 },
+    "buildCost": { "block": 600, "screw": 300 },
+    "buildTimeSeconds": 30,
+    "maxLevel": 10,
+    "production": {
+      "resourceId": "crystal",
+      "collectionMode": "manual",
+      "ratePerHour": 900,
+      "storageCap": 1000
+    },
+    "notes": ["被摧毀後停工。"]
+  },
+  {
+    "id": "block-factory",
+    "name": "積木工廠",
+    "category": "resource",
+    "description": "定時生產積木，需要手動收取。",
+    "size": { "width": 3, "height": 3 },
+    "unlock": { "commandCenterLevel": 1 },
+    "buildCost": { "block": 500, "screw": 500 },
+    "buildTimeSeconds": 30,
+    "maxLevel": 10,
+    "production": {
+      "resourceId": "block",
+      "collectionMode": "manual",
+      "ratePerHour": 1000,
+      "storageCap": 1100
+    },
+    "notes": ["被摧毀後停工。"]
+  },
+  {
+    "id": "screw-factory",
+    "name": "螺絲工廠",
+    "category": "resource",
+    "description": "定時生產螺絲，需要手動收取。",
+    "size": { "width": 3, "height": 3 },
+    "unlock": { "commandCenterLevel": 1 },
+    "buildCost": { "block": 500, "crystal": 400 },
+    "buildTimeSeconds": 30,
+    "maxLevel": 10,
+    "production": {
+      "resourceId": "screw",
+      "collectionMode": "manual",
+      "ratePerHour": 1000,
+      "storageCap": 1100
+    },
+    "notes": ["被摧毀後停工。"]
+  },
+  {
+    "id": "oil-depot",
+    "name": "油庫",
+    "category": "resource",
+    "description": "開採地下石油，作為高階兵種資源。",
+    "size": { "width": 3, "height": 3 },
+    "unlock": { "commandCenterLevel": 3 },
+    "buildCost": { "block": 2000, "screw": 1500, "crystal": 1200 },
+    "buildTimeSeconds": 60,
+    "maxLevel": 10,
+    "production": {
+      "resourceId": "oil",
+      "collectionMode": "manual",
+      "ratePerHour": 360,
+      "storageCap": 500
+    },
+    "notes": ["石油掠奪規則可與一般資源不同。", "被摧毀後僅停工，不直接掉落石油。"]
+  },
+  {
+    "id": "warehouse",
+    "name": "倉庫",
+    "category": "storage",
+    "description": "提升多種資源的儲量上限。",
+    "size": { "width": 3, "height": 3 },
+    "unlock": { "commandCenterLevel": 1 },
+    "buildCost": { "block": 1200, "screw": 1200, "crystal": 800 },
+    "buildTimeSeconds": 45,
+    "maxLevel": 15,
+    "storage": {
+      "resourceIds": ["plastic", "crystal", "block", "screw", "oil"],
+      "baseCapacity": 5000,
+      "perLevelCapacity": 2500
+    },
+    "notes": ["多個倉庫容量直接加總。", "滿倉時對應工廠停產。"]
+  },
+  {
+    "id": "normal-barracks",
+    "name": "一般士兵工廠",
+    "category": "production",
+    "description": "使用塑膠生產一般士兵。",
+    "size": { "width": 4, "height": 3 },
+    "unlock": { "commandCenterLevel": 1 },
+    "buildCost": { "block": 1000, "screw": 1000, "plastic": 600 },
+    "buildTimeSeconds": 60,
+    "maxLevel": 10,
+    "unitProduction": {
+      "unitIds": ["berserker", "shield-guard", "scarab", "cyclops", "wall-breaker", "spider-raider"],
+      "queueSize": 3
+    },
+    "notes": ["以塑膠作為主要成本。"]
+  },
+  {
+    "id": "special-barracks",
+    "name": "特種士兵工廠",
+    "category": "production",
+    "description": "消耗塑膠與石油等資源生產高階士兵。",
+    "size": { "width": 4, "height": 3 },
+    "unlock": { "commandCenterLevel": 3 },
+    "buildCost": { "block": 2500, "screw": 2500, "crystal": 2000 },
+    "buildTimeSeconds": 120,
+    "maxLevel": 10,
+    "unitProduction": {
+      "unitIds": [
+        "heavy-gunner",
+        "iron-hero",
+        "green-giant",
+        "devil",
+        "hunter",
+        "light-dancer",
+        "air-force-one",
+        "destroyer",
+        "gold-scarab",
+        "little-devil",
+        "rock-beast"
+      ],
+      "queueSize": 3
+    },
+    "notes": ["特種兵普遍吃石油。"]
+  },
+  {
+    "id": "training-center",
+    "name": "訓練中心",
+    "category": "training",
+    "description": "解鎖與強化士兵能力。",
+    "size": { "width": 3, "height": 3 },
+    "unlock": { "commandCenterLevel": 2 },
+    "buildCost": { "block": 2200, "screw": 2200, "crystal": 1600 },
+    "buildTimeSeconds": 90,
+    "maxLevel": 10,
+    "notes": ["一般兵與特種兵可拆成不同科技頁。"]
+  },
+  {
+    "id": "forge",
+    "name": "鐵匠鋪",
+    "category": "support",
+    "description": "用於寶石、裝備與整體攻防強化。",
+    "size": { "width": 3, "height": 3 },
+    "unlock": { "commandCenterLevel": 4 },
+    "buildCost": { "block": 3000, "screw": 2400, "crystal": 3000 },
+    "buildTimeSeconds": 120,
+    "maxLevel": 10,
+    "notes": ["偏中後期成長建築。"]
+  },
+  {
+    "id": "transport-center",
+    "name": "運輸中心",
+    "category": "support",
+    "description": "攻擊模式派遣部隊的出征入口。",
+    "size": { "width": 3, "height": 3 },
+    "unlock": { "commandCenterLevel": 2 },
+    "buildCost": { "block": 1800, "screw": 1200, "crystal": 1000 },
+    "buildTimeSeconds": 60,
+    "maxLevel": 10,
+    "notes": ["MVP 可只保留為出征 UI 入口。"]
+  },
+  {
+    "id": "quarters-small",
+    "name": "小型士兵房屋",
+    "category": "support",
+    "description": "士兵生產後的駐紮建築。",
+    "size": { "width": 2, "height": 2 },
+    "unlock": { "commandCenterLevel": 1 },
+    "buildCost": { "block": 500, "screw": 500 },
+    "buildTimeSeconds": 25,
+    "maxLevel": 10,
+    "housing": {
+      "capacityBase": 20,
+      "capacityPerLevel": 10
+    },
+    "notes": ["後續可以被碉堡系統部分取代。"]
+  },
+  {
+    "id": "quarters-medium",
+    "name": "中型士兵房屋",
+    "category": "support",
+    "description": "較高人口容量的士兵駐紮建築。",
+    "size": { "width": 3, "height": 2 },
+    "unlock": { "commandCenterLevel": 3 },
+    "buildCost": { "block": 1200, "screw": 900, "crystal": 600 },
+    "buildTimeSeconds": 45,
+    "maxLevel": 10,
+    "housing": {
+      "capacityBase": 50,
+      "capacityPerLevel": 20
+    },
+    "notes": ["若碉堡兼做人員容量，這棟可縮為過渡建築。"]
+  },
+  {
+    "id": "hero-hall",
+    "name": "英雄大廳",
+    "category": "hero",
+    "description": "管理英雄持有數量、養成與出戰。",
+    "size": { "width": 4, "height": 3 },
+    "unlock": { "commandCenterLevel": 3 },
+    "buildCost": { "block": 2600, "screw": 2200, "crystal": 2400 },
+    "buildTimeSeconds": 90,
+    "maxLevel": 6,
+    "heroManagement": {
+      "heroCapBase": 1,
+      "heroCapPerLevel": 1
+    },
+    "notes": ["最高持有 6 名英雄。"]
+  },
+  {
+    "id": "research-center",
+    "name": "研究中心",
+    "category": "training",
+    "description": "轉生後士兵的進階技能研究建築。",
+    "size": { "width": 3, "height": 3 },
+    "unlock": { "commandCenterLevel": 5 },
+    "buildCost": { "block": 3200, "screw": 3200, "crystal": 2800 },
+    "buildTimeSeconds": 120,
+    "maxLevel": 10,
+    "notes": ["適合第二階段實作。"]
+  }
+]

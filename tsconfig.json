@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "useDefineForClassFields": true,
+    "module": "ESNext",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "skipLibCheck": true,
+    "moduleResolution": "Bundler",
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "strict": true,
+    "noEmit": true,
+    "types": ["vite/client"]
+  },
+  "include": ["src", "vite.config.ts"]
+}

@@ -1,0 +1,179 @@
+[
+  {
+    "id": "berserker",
+    "name": "狂熱",
+    "tier": "normal",
+    "role": "通用破壞",
+    "description": "化學武器愛好者，優先攻擊所有建築物。",
+    "targetPriority": "all_buildings",
+    "moveType": "ground",
+    "attackType": "melee",
+    "canAttackGround": true,
+    "canAttackAir": false,
+    "lootBonus": null,
+    "statProfile": {
+      "durability": "medium",
+      "damage": "medium",
+      "speed": "medium",
+      "range": "melee"
+    },
+    "prototypeStats": {
+      "hp": 120,
+      "attack": 20,
+      "attackIntervalMs": 1000,
+      "moveSpeed": 92,
+      "range": 22
+    },
+    "trainingCost": { "plastic": 80 },
+    "trainingTimeSeconds": 12,
+    "notes": ["適合作為基礎白兵模板。"]
+  },
+  {
+    "id": "shield-guard",
+    "name": "巨盾",
+    "tier": "normal",
+    "role": "反防禦坦克",
+    "description": "優先攻擊防禦塔與碉堡。",
+    "targetPriority": "defense_first",
+    "moveType": "ground",
+    "attackType": "melee",
+    "canAttackGround": true,
+    "canAttackAir": false,
+    "lootBonus": null,
+    "statProfile": {
+      "durability": "high",
+      "damage": "low",
+      "speed": "low",
+      "range": "melee"
+    },
+    "prototypeStats": {
+      "hp": 220,
+      "attack": 14,
+      "attackIntervalMs": 1100,
+      "moveSpeed": 68,
+      "range": 22
+    },
+    "trainingCost": { "plastic": 120 },
+    "trainingTimeSeconds": 15,
+    "notes": ["適合作為拆防線前排。"]
+  },
+  {
+    "id": "scarab",
+    "name": "甲殼蟲",
+    "tier": "normal",
+    "role": "快速掠奪",
+    "description": "速度極快，優先攻擊資源塔、倉庫與主基地。",
+    "targetPriority": "economy_first",
+    "moveType": "ground",
+    "attackType": "melee",
+    "canAttackGround": true,
+    "canAttackAir": false,
+    "lootBonus": null,
+    "statProfile": {
+      "durability": "low",
+      "damage": "low",
+      "speed": "very_high",
+      "range": "melee"
+    },
+    "prototypeStats": {
+      "hp": 90,
+      "attack": 12,
+      "attackIntervalMs": 900,
+      "moveSpeed": 132,
+      "range": 18
+    },
+    "trainingCost": { "plastic": 100 },
+    "trainingTimeSeconds": 13,
+    "notes": ["主打資源建築壓力。"]
+  },
+  {
+    "id": "cyclops",
+    "name": "獨眼巨人",
+    "tier": "normal",
+    "role": "通用輸出",
+    "description": "快速攻擊並造成大量傷害，攻擊所有建築。",
+    "targetPriority": "all_buildings",
+    "moveType": "ground",
+    "attackType": "ranged",
+    "canAttackGround": true,
+    "canAttackAir": false,
+    "lootBonus": null,
+    "statProfile": {
+      "durability": "medium",
+      "damage": "high",
+      "speed": "medium",
+      "range": "medium"
+    },
+    "prototypeStats": {
+      "hp": 130,
+      "attack": 26,
+      "attackIntervalMs": 850,
+      "moveSpeed": 88,
+      "range": 90
+    },
+    "trainingCost": { "plastic": 140 },
+    "trainingTimeSeconds": 16,
+    "notes": ["可做成中距離輸出。"]
+  },
+  {
+    "id": "wall-breaker",
+    "name": "爆裂",
+    "tier": "normal",
+    "role": "破牆爆破",
+    "description": "短時間衝向目標，優先攻擊城牆並能無視部分防禦。",
+    "targetPriority": "wall_first",
+    "moveType": "ground",
+    "attackType": "siege",
+    "canAttackGround": true,
+    "canAttackAir": false,
+    "lootBonus": null,
+    "statProfile": {
+      "durability": "low",
+      "damage": "very_high",
+      "speed": "high",
+      "range": "melee"
+    },
+    "prototypeStats": {
+      "hp": 80,
+      "attack": 160,
+      "attackIntervalMs": 1600,
+      "moveSpeed": 118,
+      "range": 18
+    },
+    "trainingCost": { "plastic": 160 },
+    "trainingTimeSeconds": 18,
+    "notes": ["第一版可先做對城牆額外增傷。"]
+  },
+  {
+    "id": "spider-raider",
+    "name": "蜘蛛",
+    "tier": "normal",
+    "role": "經濟破壞",
+    "description": "優先攻擊資源塔與倉庫，並具有額外掠奪能力。",
+    "targetPriority": "economy_first",
+    "moveType": "ground",
+    "attackType": "melee",
+    "canAttackGround": true,
+    "canAttackAir": false,
+    "lootBonus": {
+      "resourceNodeRate": 0.1,
+      "warehouseRate": 0.05
+    },
+    "statProfile": {
+      "durability": "medium",
+      "damage": "medium",
+      "speed": "high",
+      "range": "melee"
+    },
+    "prototypeStats": {
+      "hp": 110,
+      "attack": 18,
+      "attackIntervalMs": 900,
+      "moveSpeed": 112,
+      "range": 20
+    },
+    "trainingCost": { "plastic": 150 },
+    "trainingTimeSeconds": 17,
+    "notes": ["破壞經濟的特色單位。"]
+  }
+]

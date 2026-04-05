@@ -1,0 +1,295 @@
+[
+  {
+    "id": "cannon-tower",
+    "name": "砲塔",
+    "category": "defense",
+    "description": "長射程、慢速高傷的單體防禦塔。",
+    "role": "單體高傷",
+    "size": { "width": 2, "height": 2 },
+    "unlock": { "commandCenterLevel": 1 },
+    "buildCost": { "block": 1800, "screw": 2100, "crystal": 1500 },
+    "buildTimeSeconds": 30,
+    "maxLevel": 10,
+    "combat": {
+      "hp": 47500,
+      "armor": 2500,
+      "attack": 1000,
+      "attackIntervalMs": 1800,
+      "range": 300,
+      "splashRadius": null,
+      "minRange": null,
+      "targetType": "ground"
+    },
+    "notes": ["一級數值已知。", "升級後外觀可變化兩次。"]
+  },
+  {
+    "id": "cannon-blast-tower",
+    "name": "加農塔",
+    "category": "defense",
+    "description": "近距離範圍爆炸塔，對密集敵人效果好。",
+    "role": "範圍爆炸",
+    "size": { "width": 2, "height": 2 },
+    "unlock": { "commandCenterLevel": 1 },
+    "buildCost": { "block": 2100, "screw": 1800, "crystal": 1500 },
+    "buildTimeSeconds": 30,
+    "maxLevel": 10,
+    "combat": {
+      "hp": 36000,
+      "armor": 4000,
+      "attack": 200,
+      "attackIntervalMs": 1200,
+      "range": 160,
+      "splashRadius": 30,
+      "minRange": null,
+      "targetType": "ground"
+    },
+    "notes": ["雖然單發傷害數字不高，但屬於爆炸型攻擊。"]
+  },
+  {
+    "id": "laser-tower",
+    "name": "雷射塔",
+    "category": "defense",
+    "description": "瞬發型高傷害塔，命中的每個單位都承受傷害。",
+    "role": "快速穿透",
+    "size": { "width": 2, "height": 2 },
+    "unlock": {
+      "commandCenterLevel": 4,
+      "notes": ["原始資料提到需好友擴張與多步驟建造。"]
+    },
+    "buildCost": { "block": 54000, "screw": 54000, "crystal": 60000 },
+    "buildTimeSeconds": 5,
+    "maxLevel": 10,
+    "combat": {
+      "hp": 95500,
+      "armor": 4500,
+      "attack": 1200,
+      "attackIntervalMs": 900,
+      "range": 160,
+      "splashRadius": null,
+      "minRange": null,
+      "targetType": "ground"
+    },
+    "notes": ["可做成直線命中或鎖定光束。"]
+  },
+  {
+    "id": "scatter-tower",
+    "name": "散彈塔",
+    "category": "defense",
+    "description": "同時發射兩發砲彈，擅長多目標壓制。",
+    "role": "多發投射",
+    "size": { "width": 2, "height": 2 },
+    "unlock": { "commandCenterLevel": 5 },
+    "buildCost": { "block": 108000, "screw": 135000, "crystal": 90000 },
+    "buildTimeSeconds": 10800,
+    "maxLevel": 10,
+    "combat": {
+      "hp": 100000,
+      "armor": 13000,
+      "attack": 1500,
+      "attackIntervalMs": 1500,
+      "range": 280,
+      "splashRadius": null,
+      "minRange": null,
+      "targetType": "ground"
+    },
+    "notes": ["每次攻擊可視為兩枚彈體。"]
+  },
+  {
+    "id": "radiation-tower",
+    "name": "輻射塔",
+    "category": "defense",
+    "description": "近距離毒爆塔，爆炸後會殘留危險區域。",
+    "role": "範圍持續傷害",
+    "size": { "width": 2, "height": 2 },
+    "unlock": {
+      "commandCenterLevel": 6,
+      "notes": ["原始資料提到需好友擴張與多步驟建造。"]
+    },
+    "buildCost": { "block": 160000, "screw": 180000, "crystal": 200000 },
+    "buildTimeSeconds": 5,
+    "maxLevel": 10,
+    "combat": {
+      "hp": 106700,
+      "armor": 3300,
+      "attack": 500,
+      "attackIntervalMs": 1000,
+      "range": 180,
+      "splashRadius": 30,
+      "minRange": null,
+      "targetType": "ground"
+    },
+    "notes": ["適合額外加上毒傷 DoT 區域效果。"]
+  },
+  {
+    "id": "electromagnetic-tower",
+    "name": "電磁塔",
+    "category": "defense",
+    "description": "高壓電持續打擊敵人，升級後射程與頻率提升。",
+    "role": "持續傷害",
+    "size": { "width": 2, "height": 2 },
+    "unlock": { "commandCenterLevel": 7 },
+    "buildCost": { "block": 330000, "screw": 270000, "crystal": 300000 },
+    "buildTimeSeconds": 21600,
+    "maxLevel": 10,
+    "combat": {
+      "hp": 144000,
+      "armor": 6000,
+      "attack": 1000,
+      "attackIntervalMs": 1000,
+      "range": 250,
+      "splashRadius": null,
+      "minRange": null,
+      "targetType": "ground"
+    },
+    "notes": ["原始文件中的攻擊頻率 12000 未註明單位，先以每秒傷害理解。"]
+  },
+  {
+    "id": "lightspeed-tower",
+    "name": "光速塔",
+    "category": "defense",
+    "description": "後期超遠距離高傷害塔。",
+    "role": "後期壓制",
+    "size": { "width": 2, "height": 2 },
+    "unlock": { "commandCenterLevel": 8 },
+    "buildCost": { "block": 1000000, "screw": 1000000, "crystal": 800000 },
+    "buildTimeSeconds": 5,
+    "maxLevel": 10,
+    "combat": {
+      "hp": 153600,
+      "armor": 6400,
+      "attack": 4000,
+      "attackIntervalMs": 1600,
+      "range": 300,
+      "splashRadius": null,
+      "minRange": null,
+      "targetType": "ground"
+    },
+    "notes": ["高階據點塔。"]
+  },
+  {
+    "id": "mortar-tower",
+    "name": "迫擊塔",
+    "category": "defense",
+    "description": "超遠程曲射塔，但有近身盲區。",
+    "role": "超遠曲射",
+    "size": { "width": 3, "height": 3 },
+    "unlock": { "commandCenterLevel": 16 },
+    "buildCost": { "block": 34000000, "screw": 34000000, "crystal": 28000000 },
+    "buildTimeSeconds": 432000,
+    "maxLevel": 10,
+    "combat": {
+      "hp": 80000,
+      "armor": 20000,
+      "attack": 9000,
+      "attackIntervalMs": 3000,
+      "range": 500,
+      "splashRadius": 42,
+      "minRange": 80,
+      "targetType": "ground"
+    },
+    "notes": ["近距離單位進入盲區後不攻擊。"]
+  },
+  {
+    "id": "bunker",
+    "name": "碉堡",
+    "category": "defense",
+    "description": "可駐防士兵的防禦建築，兼具人口與守軍功能。",
+    "role": "駐軍防禦",
+    "size": { "width": 3, "height": 3 },
+    "unlock": { "commandCenterLevel": 1 },
+    "buildCost": { "block": 2000, "screw": 1500, "crystal": 1200 },
+    "buildTimeSeconds": 60,
+    "maxLevel": 10,
+    "combat": {
+      "hp": null,
+      "armor": null,
+      "attack": null,
+      "attackIntervalMs": null,
+      "range": null,
+      "splashRadius": null,
+      "minRange": null,
+      "targetType": "ground"
+    },
+    "garrison": {
+      "capacityBase": 250,
+      "capacityPerLevel": 30
+    },
+    "notes": ["你已提出可改為 1500 基礎容量、每級 +500。", "可作為取代士兵房屋的主要人口建築。"]
+  },
+  {
+    "id": "wall",
+    "name": "城牆",
+    "category": "wall",
+    "description": "用來導引路線、圍住防禦核心的阻擋建築。",
+    "role": "路徑控制",
+    "size": { "width": 1, "height": 1 },
+    "unlock": { "commandCenterLevel": 1 },
+    "buildCost": { "block": 1000, "screw": 1000 },
+    "buildTimeSeconds": 5,
+    "maxLevel": 8,
+    "combat": {
+      "hp": 10000,
+      "armor": null,
+      "attack": null,
+      "attackIntervalMs": null,
+      "range": null,
+      "splashRadius": null,
+      "minRange": null,
+      "targetType": "ground"
+    },
+    "notes": [
+      "已知血量：1級 10000，2級 25000，3級 80000，4級 200000，5級 350000，6級 650000。",
+      "7、8級外觀已知但完整數值未齊。"
+    ]
+  },
+  {
+    "id": "mine",
+    "name": "地雷",
+    "category": "trap",
+    "description": "對敵方隱形的爆炸陷阱。",
+    "role": "區域陷阱",
+    "size": { "width": 1, "height": 1 },
+    "unlock": { "commandCenterLevel": 1 },
+    "buildCost": { "block": 400, "screw": 600 },
+    "buildTimeSeconds": 5,
+    "maxLevel": 4,
+    "combat": {
+      "hp": 1,
+      "armor": 0,
+      "attack": null,
+      "attackIntervalMs": null,
+      "range": null,
+      "splashRadius": 32,
+      "minRange": null,
+      "targetType": "ground"
+    },
+    "trap": {
+      "triggerRadius": 28,
+      "damageByLevel": [10000, 15000, 25000, 40000]
+    },
+    "notes": ["建議搭配城牆導流。"]
+  },
+  {
+    "id": "anti-air-tower",
+    "name": "防空塔",
+    "category": "defense",
+    "description": "只對飛行兵種生效的專職防空塔。",
+    "role": "專職防空",
+    "size": { "width": 2, "height": 2 },
+    "unlock": { "commandCenterLevel": 13 },
+    "buildCost": { "block": 5000000, "screw": 5000000, "crystal": 5000000 },
+    "buildTimeSeconds": 21600,
+    "maxLevel": 10,
+    "combat": {
+      "hp": 60000,
+      "armor": 20000,
+      "attack": 1200,
+      "attackIntervalMs": 1100,
+      "range": 360,
+      "splashRadius": null,
+      "minRange": null,
+      "targetType": "air"
+    },
+    "notes": ["原始資料建議搭配其他建築吸收火力。"]
+  }
+]

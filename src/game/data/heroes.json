@@ -1,0 +1,176 @@
+[
+  {
+    "id": "king-kong",
+    "name": "金剛",
+    "role": "主坦英雄",
+    "description": "高血高防中攻的前排英雄。",
+    "moveType": "ground",
+    "targetPriority": "all_buildings",
+    "statProfile": {
+      "durability": "very_high",
+      "damage": "medium",
+      "speed": "low",
+      "utility": "medium"
+    },
+    "prototypeStats": {
+      "hp": 1200,
+      "attack": 80,
+      "attackIntervalMs": 1100,
+      "moveSpeed": 72,
+      "range": 28
+    },
+    "mana": {
+      "base": 100,
+      "attackCost": 80,
+      "defenseCost": 15,
+      "regenPerMinute": 10
+    },
+    "skillIds": ["kong-frontline"],
+    "notes": []
+  },
+  {
+    "id": "black-knight",
+    "name": "黑騎士",
+    "role": "刺客英雄",
+    "description": "高攻高速度但血量偏低的輸出英雄。",
+    "moveType": "ground",
+    "targetPriority": "all_buildings",
+    "statProfile": {
+      "durability": "low",
+      "damage": "very_high",
+      "speed": "high",
+      "utility": "medium"
+    },
+    "prototypeStats": {
+      "hp": 620,
+      "attack": 132,
+      "attackIntervalMs": 800,
+      "moveSpeed": 118,
+      "range": 30
+    },
+    "mana": {
+      "base": 100,
+      "attackCost": 80,
+      "defenseCost": 15,
+      "regenPerMinute": 10
+    },
+    "skillIds": ["black-knight-first-strike"],
+    "notes": []
+  },
+  {
+    "id": "peter-pan",
+    "name": "小飛俠",
+    "role": "飛行輔助英雄",
+    "description": "飛行英雄，能提升周圍友軍的速度與防禦。",
+    "moveType": "air",
+    "targetPriority": "all_buildings",
+    "statProfile": {
+      "durability": "medium",
+      "damage": "medium",
+      "speed": "high",
+      "utility": "very_high"
+    },
+    "prototypeStats": {
+      "hp": 760,
+      "attack": 68,
+      "attackIntervalMs": 1000,
+      "moveSpeed": 128,
+      "range": 120
+    },
+    "mana": {
+      "base": 100,
+      "attackCost": 80,
+      "defenseCost": 15,
+      "regenPerMinute": 10
+    },
+    "skillIds": ["peter-pan-aura"],
+    "notes": ["高級玩家必備。"]
+  },
+  {
+    "id": "iron-hide",
+    "name": "鐵皮",
+    "role": "反防禦英雄",
+    "description": "優先攻擊防禦建築，並減免地雷傷害。",
+    "moveType": "ground",
+    "targetPriority": "defense_first",
+    "statProfile": {
+      "durability": "high",
+      "damage": "medium",
+      "speed": "medium",
+      "utility": "high"
+    },
+    "prototypeStats": {
+      "hp": 980,
+      "attack": 76,
+      "attackIntervalMs": 950,
+      "moveSpeed": 96,
+      "range": 30
+    },
+    "mana": {
+      "base": 100,
+      "attackCost": 80,
+      "defenseCost": 15,
+      "regenPerMinute": 10
+    },
+    "skillIds": ["iron-hide-breacher"],
+    "notes": []
+  },
+  {
+    "id": "skywalker",
+    "name": "天行號",
+    "role": "連擊法術英雄",
+    "description": "以連續攻擊削弱敵方戰鬥力的英雄。",
+    "moveType": "ground",
+    "targetPriority": "all_buildings",
+    "statProfile": {
+      "durability": "medium",
+      "damage": "high",
+      "speed": "medium",
+      "utility": "high"
+    },
+    "prototypeStats": {
+      "hp": 820,
+      "attack": 72,
+      "attackIntervalMs": 900,
+      "moveSpeed": 92,
+      "range": 140
+    },
+    "mana": {
+      "base": 100,
+      "attackCost": 80,
+      "defenseCost": 15,
+      "regenPerMinute": 10
+    },
+    "skillIds": ["skywalker-triple-wave"],
+    "notes": ["原始圖片缺失，技能細節待補。"]
+  },
+  {
+    "id": "scanner",
+    "name": "探測器",
+    "role": "偵查輔助英雄",
+    "description": "資料尚未完整，暫定為輔助與陷阱偵測英雄。",
+    "moveType": "ground",
+    "targetPriority": "all_buildings",
+    "statProfile": {
+      "durability": "medium",
+      "damage": "low",
+      "speed": "medium",
+      "utility": "very_high"
+    },
+    "prototypeStats": {
+      "hp": 700,
+      "attack": 44,
+      "attackIntervalMs": 1000,
+      "moveSpeed": 96,
+      "range": 140
+    },
+    "mana": {
+      "base": 100,
+      "attackCost": 80,
+      "defenseCost": 15,
+      "regenPerMinute": 10
+    },
+    "skillIds": ["scanner-reveal"],
+    "notes": ["需要後續補齊原始資料。"]
+  }
+]

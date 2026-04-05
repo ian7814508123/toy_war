@@ -1,0 +1,38 @@
+{
+  "baseMap": {
+    "cellSizeMeters": 10,
+    "gridWidth": 100,
+    "gridHeight": 100,
+    "expansionPatchWidth": 10,
+    "expansionPatchHeight": 10
+  },
+  "targetPriorityRules": {
+    "all_buildings": ["nearest_reachable_building"],
+    "defense_first": ["defense_tower", "bunker", "nearest_reachable_building"],
+    "economy_first": ["resource_factory", "warehouse", "command_center", "nearest_reachable_building"],
+    "wall_first": ["wall", "nearest_reachable_building"],
+    "support_heal": ["wounded_hero", "wounded_unit"],
+    "flying_only": ["flying_unit"]
+  },
+  "lootRules": {
+    "defaultResourceNodeRate": 0.05,
+    "defaultWarehouseRate": 0.02,
+    "specialCases": [
+      {
+        "unitId": "spider-raider",
+        "resourceNodeRate": 0.1,
+        "warehouseRate": 0.05
+      }
+    ]
+  },
+  "heroRules": {
+    "maxOwnedHeroes": 6,
+    "attackManaCost": 80,
+    "defenseManaCost": 15,
+    "manaRegenPerMinute": 10
+  },
+  "damageRules": {
+    "armorRate": 0.1,
+    "minimumDamage": 1
+  }
+}

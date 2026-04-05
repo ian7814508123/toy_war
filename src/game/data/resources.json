@@ -1,0 +1,56 @@
+[
+  {
+    "id": "plastic",
+    "name": "塑膠",
+    "category": "military",
+    "description": "一般士兵與部分建築的基礎生產材料。",
+    "canBeLooted": true,
+    "storageShared": false,
+    "producers": ["plastic-factory"]
+  },
+  {
+    "id": "crystal",
+    "name": "水晶",
+    "category": "base",
+    "description": "防禦建築與高階建設常用資源。",
+    "canBeLooted": true,
+    "storageShared": false,
+    "producers": ["crystal-factory"]
+  },
+  {
+    "id": "block",
+    "name": "積木",
+    "category": "base",
+    "description": "基地建築與防禦工程的主力材料。",
+    "canBeLooted": true,
+    "storageShared": false,
+    "producers": ["block-factory"]
+  },
+  {
+    "id": "screw",
+    "name": "螺絲",
+    "category": "base",
+    "description": "機械與防禦系統常用資源。",
+    "canBeLooted": true,
+    "storageShared": false,
+    "producers": ["screw-factory"]
+  },
+  {
+    "id": "oil",
+    "name": "石油",
+    "category": "military",
+    "description": "高階士兵與特種工廠需求資源。",
+    "canBeLooted": false,
+    "storageShared": false,
+    "producers": ["oil-depot"]
+  },
+  {
+    "id": "gem",
+    "name": "寶石",
+    "category": "advanced",
+    "description": "裝備與高階強化系統的後期素材。",
+    "canBeLooted": false,
+    "storageShared": false,
+    "producers": ["forge"]
+  }
+]
