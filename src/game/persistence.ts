@@ -3,6 +3,7 @@ export interface SavedPlacedBuilding {
   definitionId: string;
   gridX: number;
   gridY: number;
+  level: number;
 }
 
 export interface SavedFactoryRuntime {
@@ -49,6 +50,13 @@ export const loadGameState = (): SavedGameState | null => {
     if (parsed.version !== 1 || !Array.isArray(parsed.placedBuildings)) {
       return null;
     }
+
+    // 補強舊存檔缺 level 欄位的狀況
+    parsed.placedBuildings.forEach((item) => {
+      if (typeof item.level !== "number") {
+        item.level = 1;
+      }
+    });
 
     return parsed;
   } catch {

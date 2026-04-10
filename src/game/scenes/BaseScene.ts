@@ -1,6 +1,5 @@
 import Phaser from "phaser";
 import { gameCatalog } from "../data/catalog";
-import { MVP_UNIT_IDS } from "../constants";
 import { loadGameState, saveGameState } from "../persistence";
 import {
   renderGameUi,
@@ -16,6 +15,7 @@ interface PlacedBuilding {
   definition: PlaceableBuilding;
   gridX: number;
   gridY: number;
+  level: number;
   rect: Phaser.GameObjects.Rectangle;
   label: Phaser.GameObjects.Text;
 }
@@ -98,6 +98,10 @@ const BUILDING_COUNT_LIMITS: Record<string, number> = {
   mine: 8
 };
 const DRAG_THRESHOLD = 12;
+const CAMERA_MARGIN = 160;
+const CAMERA_ZOOM_MIN = 0.9;
+const CAMERA_ZOOM_MAX = 1.8;
+const CAMERA_ZOOM_STEP = 0.1;
 
 export class BaseScene extends Phaser.Scene {
   private occupancy: (string | null)[][] = [];
@@ -114,6 +118,9 @@ export class BaseScene extends Phaser.Scene {
   private pendingDrag: PendingDragRuntime | null = null;
   private nextBuildingSerial = 1;
   private unsubscribeUi?: () => void;
+  private cameraControls?: Phaser.Cameras.Controls.SmoothedKeyControl;
+  private cameraDragPointerId: number | null = null;
+  private lastCameraPointerPosition: { x: number; y: number } | null = null;
   private readonly handleBeforeUnload = (): void => {
     this.persistGameState();
   };
@@ -127,6 +134,7 @@ export class BaseScene extends Phaser.Scene {
     this.input.mouse?.disableContextMenu();
     this.initializeState();
     this.drawField();
+    this.setupCamera();
     this.createPlacementPreview();
     if (!this.restoreGameState()) {
       this.seedBase();
@@ -217,7 +225,13 @@ export class BaseScene extends Phaser.Scene {
   }
 
   private registerPointerInput(): void {
+    this.input.on("wheel", (_pointer: Phaser.Input.Pointer, _objects: unknown[], _dx: number, dy: number) => {
+      this.adjustZoom(dy > 0 ? -CAMERA_ZOOM_STEP : CAMERA_ZOOM_STEP);
+    });
+
     this.input.on("pointermove", (pointer: Phaser.Input.Pointer) => {
+      this.updateCameraDrag(pointer);
+
       if (
         this.pendingDrag &&
         this.pendingDrag.pointerId === pointer.id &&
@@ -241,6 +255,11 @@ export class BaseScene extends Phaser.Scene {
     });
 
     this.input.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
+      if (pointer.middleButtonDown()) {
+        this.startCameraDrag(pointer);
+        return;
+      }
+
       if (pointer.rightButtonDown()) {
         this.clearSelection();
         return;
@@ -268,6 +287,10 @@ export class BaseScene extends Phaser.Scene {
     });
 
     this.input.on("pointerup", (pointer: Phaser.Input.Pointer) => {
+      if (this.cameraDragPointerId === pointer.id) {
+        this.stopCameraDrag();
+      }
+
       if (pointer.button !== 0) {
         return;
       }
@@ -309,6 +332,10 @@ export class BaseScene extends Phaser.Scene {
     });
   }
 
+  update(_time: number, delta: number): void {
+    this.cameraControls?.update(delta);
+  }
+
   private handleUiAction(action: GameUiAction): void {
     if (action.type === "clear-selection") {
       this.clearSelection();
@@ -340,9 +367,76 @@ export class BaseScene extends Phaser.Scene {
       return;
     }
 
+    if (action.type === "upgrade-selected-building") {
+      this.upgradeSelectedBuilding();
+      return;
+    }
+
     if (action.type === "delete-selected-building") {
       this.deleteSelectedBuilding();
     }
+  }
+
+  private getScaledStat(baseValue: number, level: number): number {
+    return Math.floor(baseValue * Math.pow(1.15, level - 1));
+  }
+
+  private getUpgradeCost(baseCost: Record<string, number>, level: number): Record<string, number> {
+    const cost: Record<string, number> = {};
+    Object.entries(baseCost).forEach(([resourceId, amount]) => {
+      cost[resourceId] = Math.floor(amount * Math.pow(1.5, level - 1));
+    });
+    return cost;
+  }
+
+  private upgradeSelectedBuilding(): void {
+    const placed = this.selectedPlacedBuilding;
+    if (!placed || !this.canUpgradeSelectedBuilding()) {
+      return;
+    }
+
+    const nextLevel = placed.level + 1;
+    const cost = this.getUpgradeCost(placed.definition.buildCost, nextLevel);
+
+    this.spendResources(cost);
+    placed.level = nextLevel;
+    this.updateBuildingLabel(placed);
+
+    // 更新 Factory Runtime
+    if (this.isBaseBuilding(placed.definition) && placed.definition.production) {
+      const runtime = this.factoryRuntimeById[placed.instanceId];
+      if (runtime) {
+        runtime.ratePerHour = this.getScaledStat(placed.definition.production.ratePerHour ?? 0, placed.level);
+        runtime.localCap = this.getScaledStat(placed.definition.production.storageCap ?? 0, placed.level);
+      }
+    }
+
+    this.showFloatingText(placed.rect.x, placed.rect.y - 18, `升級至 Lv.${placed.level}`, palette.valid);
+    this.persistGameState();
+    this.refreshUi();
+  }
+
+  private canUpgradeSelectedBuilding(): boolean {
+    const placed = this.selectedPlacedBuilding;
+    if (!placed || this.dragRuntime) {
+      return false;
+    }
+
+    if (placed.level >= (placed.definition.maxLevel ?? 10)) {
+      return false;
+    }
+
+    // 主控台等級限制檢查
+    const commandCenter = this.placedBuildings.find((b) => b.definition.id === "command-center");
+    if (placed.definition.id !== "command-center" && commandCenter) {
+      if (placed.level >= commandCenter.level) {
+        return false;
+      }
+    }
+
+    const nextLevel = placed.level + 1;
+    const cost = this.getUpgradeCost(placed.definition.buildCost, nextLevel);
+    return this.canAfford(cost);
   }
 
   private clearSelection(): void {
@@ -390,7 +484,8 @@ export class BaseScene extends Phaser.Scene {
     definition: PlaceableBuilding,
     gridX: number,
     gridY: number,
-    instanceId?: string
+    instanceId?: string,
+    level = 1
   ): void {
     const width = definition.size.width;
     const height = definition.size.height;
@@ -410,8 +505,17 @@ export class BaseScene extends Phaser.Scene {
       .setStrokeStyle(2, 0x1d1d1d, 0.35)
       .setInteractive({ useHandCursor: true });
 
+    // 確保 instanceId 唯一
+    let resolvedInstanceId = instanceId ?? this.createBuildingInstanceId(definition.id);
+    if (this.placedBuildings.some(b => b.instanceId === resolvedInstanceId)) {
+      resolvedInstanceId = this.createBuildingInstanceId(definition.id);
+    }
+    
+    this.syncNextBuildingSerial(resolvedInstanceId);
+    this.markOccupancy(resolvedInstanceId, definition, gridX, gridY);
+
     const label = this.add
-      .text(rect.x, rect.y, definition.name, {
+      .text(rect.x, rect.y, "", {
         color: "#101010",
         fontFamily: "Arial",
         fontSize: width <= 1 ? "10px" : "13px",
@@ -420,18 +524,17 @@ export class BaseScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
-    const resolvedInstanceId = instanceId ?? this.createBuildingInstanceId(definition.id);
-    this.syncNextBuildingSerial(resolvedInstanceId);
-    this.markOccupancy(resolvedInstanceId, definition, gridX, gridY);
-
     const placed: PlacedBuilding = {
       instanceId: resolvedInstanceId,
       definition,
       gridX,
       gridY,
+      level,
       rect,
       label
     };
+
+    this.updateBuildingLabel(placed);
 
     rect.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
       pointer.event.stopPropagation();
@@ -462,8 +565,8 @@ export class BaseScene extends Phaser.Scene {
         buildingId: resolvedInstanceId,
         resourceId: definition.production.resourceId,
         storedAmount: 0,
-        ratePerHour: definition.production.ratePerHour ?? 0,
-        localCap: definition.production.storageCap ?? 0,
+        ratePerHour: this.getScaledStat(definition.production.ratePerHour ?? 0, level),
+        localCap: this.getScaledStat(definition.production.storageCap ?? 0, level),
         status: "producing"
       };
     }
@@ -475,6 +578,201 @@ export class BaseScene extends Phaser.Scene {
         queue: []
       };
     }
+  }
+
+  private updateBuildingLabel(placed: PlacedBuilding): void {
+    const serialMatch = placed.instanceId.match(/-(\d+)$/);
+    const serialStr = serialMatch ? ` #${serialMatch[1]}` : "";
+    placed.label.setText(`${placed.definition.name}${serialStr}\nLv.${placed.level}`);
+  }
+
+  private refreshUi(): void {
+    renderGameUi({
+      selectionLines: this.buildSelectionLines(),
+      actionHint: this.buildActionHintLines(),
+      economyLines: this.buildEconomySummary(),
+      forceLines: this.buildForceSummary(),
+      productionLines: this.buildProductionSummary(),
+      selectedBuildingId: this.selectedBuilding?.id ?? null,
+      enabledUnitIds: this.getEnabledUnitIds(),
+      collectEnabled: this.canCollectSelectedBuilding(),
+      upgradeEnabled: this.canUpgradeSelectedBuilding(),
+      deleteEnabled: this.canDeleteSelectedBuilding(),
+      unitInventory: this.unitInventory
+    });
+  }
+
+  private getEnabledUnitIds(): string[] {
+    const placed = this.selectedPlacedBuilding;
+    if (!placed || !this.isBaseBuilding(placed.definition) || !placed.definition.unitProduction) {
+      return [];
+    }
+    return placed.definition.unitProduction.unitIds.filter((id) => this.canQueueUnit(id));
+  }
+
+  private buildSelectionLines(): string[] {
+    if (this.dragRuntime) {
+      const placed = this.dragRuntime.placedBuilding;
+      return [
+        `拖曳中：${placed.definition.name}`,
+        `原位置：(${this.dragRuntime.originX}, ${this.dragRuntime.originY})`,
+        `尺寸：${placed.definition.size.width} x ${placed.definition.size.height}`,
+        "放開滑鼠完成移動。"
+      ];
+    }
+
+    if (this.selectedBuilding) {
+      const currentCount = this.getBuildingCount(this.selectedBuilding.id);
+      const limit = this.getBuildingCountLimit(this.selectedBuilding.id);
+      return [
+        `準備放置：${this.selectedBuilding.name}`,
+        `類型：${this.selectedBuilding.category}`,
+        `尺寸：${this.selectedBuilding.size.width} x ${this.selectedBuilding.size.height}`,
+        `需求主控台：Lv.${this.selectedBuilding.unlock.commandCenterLevel}`,
+        `成本：${this.formatCost(this.selectedBuilding.buildCost)}`,
+        limit ? `數量：${currentCount} / ${limit}` : `數量：${currentCount}`
+      ];
+    }
+
+    if (this.selectedPlacedBuilding) {
+      const placed = this.selectedPlacedBuilding;
+      const serialMatch = placed.instanceId.match(/-(\d+)$/);
+      const serialDisplay = serialMatch ? ` #${serialMatch[1]}` : "";
+      
+      const lines = [
+        `已選建築：${placed.definition.name}${serialDisplay}`,
+        `等級：Lv.${placed.level}`,
+        `位置：(${placed.gridX}, ${placed.gridY})`
+      ];
+      
+      const limit = this.getBuildingCountLimit(placed.definition.id);
+      lines.push(limit ? `數量：${this.getBuildingCount(placed.definition.id)} / ${limit}` : "數量：未限制");
+
+      if (this.isBaseBuilding(placed.definition) && placed.definition.production) {
+        const runtime = this.factoryRuntimeById[placed.instanceId];
+        lines.push(
+          `工廠產物：${this.getResourceName(placed.definition.production.resourceId)}`,
+          `暫存：${Math.floor(runtime?.storedAmount ?? 0)} / ${runtime?.localCap ?? 0}`,
+          `時薪：${runtime?.ratePerHour ?? 0}/hr`,
+          `狀態：${this.getFactoryStatusLabel(runtime?.status ?? "producing")}`
+        );
+      } else if (this.isBaseBuilding(placed.definition) && placed.definition.unitProduction) {
+        const runtime = this.barracksRuntimeById[placed.instanceId];
+        lines.push(`兵營佇列：${runtime.queue.length} / ${runtime.queueSize}`);
+      } else if (this.isBaseBuilding(placed.definition) && placed.definition.housing) {
+        const cap = this.getScaledStat(placed.definition.housing.capacityBase, placed.level);
+        lines.push(`人口容量：+${cap}`);
+      }
+
+      if (placed.level < (placed.definition.maxLevel ?? 10)) {
+        const nextLevel = placed.level + 1;
+        const upgradeCost = this.getUpgradeCost(placed.definition.buildCost, nextLevel);
+        lines.push(`升級成本：${this.formatCost(upgradeCost)}`);
+        
+        // 主控台等級檢查提示
+        const commandCenter = this.placedBuildings.find((b) => b.definition.id === "command-center");
+        if (placed.definition.id !== "command-center" && commandCenter && placed.level >= commandCenter.level) {
+          lines.push("(需先升級主控台)");
+        }
+      } else {
+        lines.push("已達等級上限");
+      }
+
+      return lines;
+    }
+
+    return ["尚未選擇建築。", "先從控制板選建築，或點地圖中的工廠 / 兵營。"];
+  }
+
+  private buildActionHintLines(): string[] {
+    if (this.dragRuntime) {
+      return ["綠色預覽可放置，紅色表示會重疊、超界或超過數量上限。", "放開滑鼠落位，右鍵取消並回到原位。"];
+    }
+
+    if (this.selectedBuilding) {
+      return ["左鍵放到格線內即可建造。", "紅色預覽表示超界、重疊，或已達建築數量上限。"];
+    }
+
+    if (this.selectedPlacedBuilding) {
+      const placed = this.selectedPlacedBuilding;
+      if (this.isBaseBuilding(placed.definition) && placed.definition.production) {
+        return ["按住建築可直接拖曳移動。", "收集按鈕可領取暫存資源，倉庫滿時工廠會停產。"];
+      }
+
+      if (this.isBaseBuilding(placed.definition) && placed.definition.unitProduction) {
+        return ["按住建築可直接拖曳移動。", "下方單位按鈕可加入訓練佇列，刪除會清空該兵營佇列。"];
+      }
+    }
+
+    return ["左鍵放置建築。", "按住地圖上的建築可直接拖曳，右鍵清除目前選取。", "系統會自動把基地狀態存到本機瀏覽器。"];
+  }
+
+  private buildEconomySummary(): string[] {
+    const lines = ["庫存："];
+    for (const resourceId of ["block", "screw", "crystal", "plastic", "oil"]) {
+      lines.push(
+        `${this.getResourceName(resourceId)} ${Math.floor(this.resourceState[resourceId] ?? 0)}/${this.getStorageCap(resourceId)}`
+      );
+    }
+
+    const factories = this.placedBuildings
+      .filter((placed) => this.isBaseBuilding(placed.definition) && Boolean(placed.definition.production))
+      .slice(0, 2);
+
+    if (factories.length > 0) {
+      lines.push("工廠：");
+      factories.forEach((placed) => {
+        const runtime = this.factoryRuntimeById[placed.instanceId];
+        lines.push(
+          `${placed.definition.name} ${Math.floor(runtime.storedAmount)}/${runtime.localCap} ${this.getFactoryStatusLabel(runtime.status)}`
+        );
+      });
+    }
+
+    return lines;
+  }
+
+  private buildForceSummary(): string[] {
+    const lines = [`人口：${this.getPopulationUsed()} / ${this.getPopulationCap()}`];
+    if (this.getQueuedPopulation() > 0) {
+      lines.push(`排隊人口：${this.getQueuedPopulation()}`);
+    }
+    
+    lines.push("庫存：");
+    Object.entries(this.unitInventory).forEach(([unitId, count]) => {
+      if (count > 0) {
+        lines.push(`${gameCatalog.unitById[unitId]?.name ?? unitId}：${count}`);
+      }
+    });
+
+    if (lines.length === 2) {
+      lines.push("尚未擁有任何部隊。");
+    }
+
+    return lines;
+  }
+
+  private buildProductionSummary(): string[] {
+    const placed = this.selectedPlacedBuilding;
+    if (!placed || !this.isBaseBuilding(placed.definition) || !placed.definition.unitProduction) {
+      return ["選取一般士兵工廠後，這裡會顯示訓練佇列。"];
+    }
+
+    const runtime = this.barracksRuntimeById[placed.instanceId];
+    if (!runtime || runtime.queue.length === 0) {
+      return ["兵營佇列為空。"];
+    }
+
+    const lines = runtime.queue.slice(0, 2).map((order, index) => {
+      const unit = gameCatalog.unitById[order.unitId];
+      return `${index === 0 ? "進行中" : "下一個"}：${unit.name} ${Math.ceil(order.remainingSeconds)} 秒`;
+    });
+
+    if (runtime.queue.length > 2) {
+      lines.push(`其餘佇列：+${runtime.queue.length - 2}`);
+    }
+
+    return lines;
   }
 
   private collectFromSelectedBuilding(): void {
@@ -786,149 +1084,74 @@ export class BaseScene extends Phaser.Scene {
       .setVisible(true);
   }
 
-  private refreshUi(): void {
-    renderGameUi({
-      selectionLines: this.buildSelectionLines(),
-      actionHint: this.buildActionHintLines(),
-      economyLines: this.buildEconomySummary(),
-      forceLines: this.buildForceSummary(),
-      productionLines: this.buildProductionSummary(),
-      selectedBuildingId: this.selectedBuilding?.id ?? null,
-      enabledUnitIds: MVP_UNIT_IDS.filter((unitId) => this.canQueueUnit(unitId)),
-      collectEnabled: this.canCollectSelectedBuilding(),
-      deleteEnabled: this.canDeleteSelectedBuilding()
-    });
-  }
+  private setupCamera(): void {
+    const worldWidth = GRID.cols * GRID.cell;
+    const worldHeight = GRID.rows * GRID.cell;
+    const camera = this.cameras.main;
 
-  private buildSelectionLines(): string[] {
-    if (this.dragRuntime) {
-      const placed = this.dragRuntime.placedBuilding;
-      return [
-        `拖曳中：${placed.definition.name}`,
-        `原位置：(${this.dragRuntime.originX}, ${this.dragRuntime.originY})`,
-        `尺寸：${placed.definition.size.width} x ${placed.definition.size.height}`,
-        "放開滑鼠完成移動。"
-      ];
+    camera.setBounds(
+      GRID.x - CAMERA_MARGIN,
+      GRID.y - CAMERA_MARGIN,
+      worldWidth + CAMERA_MARGIN * 2,
+      worldHeight + CAMERA_MARGIN * 2
+    );
+    camera.centerOn(GRID.x + worldWidth / 2, GRID.y + worldHeight / 2);
+    camera.setZoom(1.12);
+    camera.roundPixels = false;
+
+    if (!this.input.keyboard) {
+      return;
     }
 
-    if (this.selectedBuilding) {
-      const currentCount = this.getBuildingCount(this.selectedBuilding.id);
-      const limit = this.getBuildingCountLimit(this.selectedBuilding.id);
-      return [
-        `準備放置：${this.selectedBuilding.name}`,
-        `類型：${this.selectedBuilding.category}`,
-        `尺寸：${this.selectedBuilding.size.width} x ${this.selectedBuilding.size.height}`,
-        `需求主控台：Lv.${this.selectedBuilding.unlock.commandCenterLevel}`,
-        `成本：${this.formatCost(this.selectedBuilding.buildCost)}`,
-        limit ? `數量：${currentCount} / ${limit}` : `數量：${currentCount}`
-      ];
-    }
+    const keys = this.input.keyboard.addKeys("W,A,S,D,Q,E") as Record<string, Phaser.Input.Keyboard.Key>;
 
-    if (this.selectedPlacedBuilding) {
-      const placed = this.selectedPlacedBuilding;
-      const lines = [`已選建築：${placed.definition.name}`, `位置：(${placed.gridX}, ${placed.gridY})`];
-      const limit = this.getBuildingCountLimit(placed.definition.id);
-      lines.push(limit ? `數量：${this.getBuildingCount(placed.definition.id)} / ${limit}` : "數量：未限制");
-
-      if (this.isBaseBuilding(placed.definition) && placed.definition.production) {
-        const runtime = this.factoryRuntimeById[placed.instanceId];
-        lines.push(
-          `工廠產物：${this.getResourceName(placed.definition.production.resourceId)}`,
-          `暫存：${Math.floor(runtime?.storedAmount ?? 0)} / ${runtime?.localCap ?? 0}`,
-          `狀態：${this.getFactoryStatusLabel(runtime?.status ?? "producing")}`
-        );
-      } else if (this.isBaseBuilding(placed.definition) && placed.definition.unitProduction) {
-        const runtime = this.barracksRuntimeById[placed.instanceId];
-        lines.push(`兵營佇列：${runtime.queue.length} / ${runtime.queueSize}`, "可訓練：狂熱 / 巨盾 / 爆裂");
-      } else if (this.isBaseBuilding(placed.definition) && placed.definition.housing) {
-        lines.push(`人口容量：+${placed.definition.housing.capacityBase}`);
-      }
-
-      return lines;
-    }
-
-    return ["尚未選擇建築。", "先從控制板選建築，或點地圖中的工廠 / 兵營。"];
-  }
-
-  private buildActionHintLines(): string[] {
-    if (this.dragRuntime) {
-      return ["綠色預覽可放置，紅色表示會重疊、超界或超過數量上限。", "放開滑鼠落位，右鍵取消並回到原位。"];
-    }
-
-    if (this.selectedBuilding) {
-      return ["左鍵放到格線內即可建造。", "紅色預覽表示超界、重疊，或已達建築數量上限。"];
-    }
-
-    if (this.selectedPlacedBuilding) {
-      const placed = this.selectedPlacedBuilding;
-      if (this.isBaseBuilding(placed.definition) && placed.definition.production) {
-        return ["按住建築可直接拖曳移動。", "收集按鈕可領取暫存資源，倉庫滿時工廠會停產。"];
-      }
-
-      if (this.isBaseBuilding(placed.definition) && placed.definition.unitProduction) {
-        return ["按住建築可直接拖曳移動。", "下方單位按鈕可加入訓練佇列，刪除會清空該兵營佇列。"];
-      }
-    }
-
-    return ["左鍵放置建築。", "按住地圖上的建築可直接拖曳，右鍵清除目前選取。", "系統會自動把基地狀態存到本機瀏覽器。"];
-  }
-
-  private buildEconomySummary(): string[] {
-    const lines = ["庫存："];
-    for (const resourceId of ["block", "screw", "crystal", "plastic", "oil"]) {
-      lines.push(
-        `${this.getResourceName(resourceId)} ${Math.floor(this.resourceState[resourceId] ?? 0)}/${this.getStorageCap(resourceId)}`
-      );
-    }
-
-    const factories = this.placedBuildings
-      .filter((placed) => this.isBaseBuilding(placed.definition) && Boolean(placed.definition.production))
-      .slice(0, 2);
-
-    if (factories.length > 0) {
-      lines.push("工廠：");
-      factories.forEach((placed) => {
-        const runtime = this.factoryRuntimeById[placed.instanceId];
-        lines.push(
-          `${placed.definition.name} ${Math.floor(runtime.storedAmount)}/${runtime.localCap} ${this.getFactoryStatusLabel(runtime.status)}`
-        );
-      });
-    }
-
-    return lines;
-  }
-
-  private buildForceSummary(): string[] {
-    return [
-      `人口：${this.getPopulationUsed()} / ${this.getPopulationCap()}`,
-      `排隊人口：${this.getQueuedPopulation()}`,
-      `狂熱：${this.unitInventory.berserker ?? 0}`,
-      `巨盾：${this.unitInventory["shield-guard"] ?? 0}`,
-      `爆裂：${this.unitInventory["wall-breaker"] ?? 0}`
-    ];
-  }
-
-  private buildProductionSummary(): string[] {
-    const placed = this.selectedPlacedBuilding;
-    if (!placed || !this.isBaseBuilding(placed.definition) || !placed.definition.unitProduction) {
-      return ["選取一般士兵工廠後，這裡會顯示訓練佇列。"];
-    }
-
-    const runtime = this.barracksRuntimeById[placed.instanceId];
-    if (!runtime || runtime.queue.length === 0) {
-      return ["兵營佇列為空。"];
-    }
-
-    const lines = runtime.queue.slice(0, 2).map((order, index) => {
-      const unit = gameCatalog.unitById[order.unitId];
-      return `${index === 0 ? "進行中" : "下一個"}：${unit.name} ${Math.ceil(order.remainingSeconds)} 秒`;
+    this.cameraControls = new Phaser.Cameras.Controls.SmoothedKeyControl({
+      camera,
+      left: keys.A,
+      right: keys.D,
+      up: keys.W,
+      down: keys.S,
+      zoomIn: keys.Q,
+      zoomOut: keys.E,
+      acceleration: 0.05,
+      drag: 0.0005,
+      maxSpeed: 0.9
     });
 
-    if (runtime.queue.length > 2) {
-      lines.push(`其餘佇列：+${runtime.queue.length - 2}`);
+    this.input.keyboard.on("keydown-LEFT", () => camera.scrollX -= 18 / camera.zoom);
+    this.input.keyboard.on("keydown-RIGHT", () => camera.scrollX += 18 / camera.zoom);
+    this.input.keyboard.on("keydown-UP", () => camera.scrollY -= 18 / camera.zoom);
+    this.input.keyboard.on("keydown-DOWN", () => camera.scrollY += 18 / camera.zoom);
+  }
+
+  private adjustZoom(delta: number): void {
+    const camera = this.cameras.main;
+    const nextZoom = Phaser.Math.Clamp(camera.zoom + delta, CAMERA_ZOOM_MIN, CAMERA_ZOOM_MAX);
+    camera.setZoom(nextZoom);
+  }
+
+  private startCameraDrag(pointer: Phaser.Input.Pointer): void {
+    this.cameraDragPointerId = pointer.id;
+    this.lastCameraPointerPosition = { x: pointer.position.x, y: pointer.position.y };
+  }
+
+  private stopCameraDrag(): void {
+    this.cameraDragPointerId = null;
+    this.lastCameraPointerPosition = null;
+  }
+
+  private updateCameraDrag(pointer: Phaser.Input.Pointer): void {
+    if (this.cameraDragPointerId !== pointer.id || !pointer.isDown || !this.lastCameraPointerPosition) {
+      return;
     }
 
-    return lines;
+    const camera = this.cameras.main;
+    const dx = pointer.position.x - this.lastCameraPointerPosition.x;
+    const dy = pointer.position.y - this.lastCameraPointerPosition.y;
+
+    camera.scrollX -= dx / camera.zoom;
+    camera.scrollY -= dy / camera.zoom;
+    this.lastCameraPointerPosition = { x: pointer.position.x, y: pointer.position.y };
   }
 
   private canPlaceCurrentSelection(gridX: number, gridY: number): boolean {
@@ -1092,7 +1315,7 @@ export class BaseScene extends Phaser.Scene {
         return;
       }
 
-      this.placeBuilding(definition, item.gridX, item.gridY, item.instanceId);
+      this.placeBuilding(definition, item.gridX, item.gridY, item.instanceId, item.level);
     });
 
     saved.factories.forEach((factory) => {
@@ -1132,7 +1355,8 @@ export class BaseScene extends Phaser.Scene {
         instanceId: placed.instanceId,
         definitionId: placed.definition.id,
         gridX: placed.gridX,
-        gridY: placed.gridY
+        gridY: placed.gridY,
+        level: placed.level
       })),
       factories: Object.values(this.factoryRuntimeById).map((factory) => ({
         buildingId: factory.buildingId,
@@ -1169,7 +1393,8 @@ export class BaseScene extends Phaser.Scene {
         return sum;
       }
 
-      return sum + placed.definition.housing.capacityBase;
+      const cap = this.getScaledStat(placed.definition.housing.capacityBase, placed.level);
+      return sum + cap;
     }, 0);
   }
 
@@ -1182,7 +1407,6 @@ export class BaseScene extends Phaser.Scene {
   }
 
   private getStorageCap(resourceId: string): number {
-    const warehouses = this.placedBuildings.filter((placed) => placed.definition.id === "warehouse");
     const warehouseDef = gameCatalog.baseBuildingById.warehouse;
     const storage = warehouseDef.storage;
 
@@ -1190,7 +1414,13 @@ export class BaseScene extends Phaser.Scene {
       return resourceId === "gem" ? 0 : 999999;
     }
 
-    return warehouses.length * (storage.baseCapacity ?? 0);
+    const totalCap = this.placedBuildings
+      .filter((placed) => placed.definition.id === "warehouse")
+      .reduce((sum, placed) => {
+        return sum + this.getScaledStat(storage.baseCapacity ?? 0, placed.level);
+      }, 0);
+
+    return totalCap;
   }
 
   private getGridCell(worldX: number, worldY: number): { x: number; y: number } | null {
